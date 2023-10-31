@@ -1,5 +1,5 @@
 import "./App.css";
-import { db, auth } from "./firebase";
+import { db, auth, storage } from "./firebase";
 import {
   getDocs,
   collection,
@@ -8,6 +8,7 @@ import {
   deleteDoc,
   updateDoc,
 } from "firebase/firestore";
+import { ref, uploadBytes } from "firebase/storage";
 
 import { Auth } from "./components/auth";
 import { useEffect, useState } from "react";
@@ -18,6 +19,8 @@ function App() {
   const [releaseDate, setReleasedData] = useState("");
   const [receivedOscar, setReceivedOscar] = useState(false);
   const [updatedTitle, setUpdatedTitle] = useState("");
+
+  const [file, setFile] = useState<any>(null);
 
   const moviesCollectionRef = collection(db, "movies");
 
@@ -56,6 +59,16 @@ function App() {
     const movieDoc = doc(db, "movies", id);
     await updateDoc(movieDoc, { title: updatedTitle });
     getMovies();
+  };
+
+  const handleUploadFile = async () => {
+    if (!file) return;
+    const fileFolderRef = ref(storage, `allimages/${file.name}`);
+    try {
+      await uploadBytes(fileFolderRef, file);
+    } catch (error) {
+      console.error("error uploading file", error);
+    }
   };
 
   return (
@@ -113,7 +126,7 @@ function App() {
         })}
       </div>
 
-      <div style={{ height: "2rem" }}>
+      <div>
         <h2>Add movie to list</h2>
         <input placeholder="title" onChange={(e) => setTitle(e.target.value)} />
         <input
@@ -129,6 +142,12 @@ function App() {
         <label>got Oscar?</label>
 
         <button onClick={handleSubmitMovie}>Submit Movie</button>
+      </div>
+
+      <div>
+        <h3>upload image</h3>
+        <input type="file" onChange={(e) => setFile(e.target.files?.[0])} />
+        <button onClick={handleUploadFile}>Upload file</button>
       </div>
     </div>
   );
